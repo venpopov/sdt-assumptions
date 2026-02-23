@@ -1,0 +1,13 @@
+---
+title: On assumptions of SDT models
+authors:
+  - name: Vencislav Popov
+    affiliation: Department of Psychology, University of Zurich
+    corresponding: true
+bibliography: references.bib
+draft:
+  true
+---
+
+## Section
+This is a simple placeholder for the manuscript's main document [@knuth84].
