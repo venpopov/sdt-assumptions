@@ -1,0 +1,293 @@
+---
+title: "When is a family of random variables shift-representable?"
+format: html
+---
+
+```{r}
+plgamma <- function(x, shape, rate) {
+  pgamma(exp(x), shape = shape, rate = rate)
+}
+```
+
+```{r}
+par(mfrow = c(1, 2))
+x <- seq(0, 5, 0.01)
+p <- c(0.3, 0.7)
+pcols <- c("blue", "darkgreen")
+
+# Panel 1: Gamma CDFs
+plot(x, pgamma(x, shape = 5, rate = 3), type = "l", ylab = "Pr(X <= x)", main = "Gamma CDFs")
+lines(x, pgamma(x, shape = 5, rate = 2), col = "red")
+legend(
+  "topleft", 
+  legend = c(expression(X[1] %~% Gamma(5, 3)), expression(X[2] %~% Gamma(5, 2))), 
+  col = c("black", "red"), lty = 1
+)
+for (i in seq_along(p)) {
+  qx1 <- qgamma(p[i], shape = 5, rate = 3)
+  qx2 <- qgamma(p[i], shape = 5, rate = 2)
+  points(c(qx1, qx2), c(p[i], p[i]), pch = 19, col = pcols[i])
+  segments(qx1, p[i], qx2, p[i], lty = 2, col = pcols[i])
+  segments(qx1, 0, qx1, p[i], lty = 3, col = pcols[i])
+  segments(qx2, 0, qx2, p[i], lty = 3, col = pcols[i])
+}
+
+
+# Panel 2: LogGamma CDFs
+y <- seq(-1, 2, 0.01)
+plot(
+  y, plgamma(y, shape = 5, rate = 3), type = "l", ylab = "Pr(Y <= y)", xlab = "y = log(x)", 
+  main = "LogGamma CDFs"
+)
+lines(y, plgamma(y, shape = 5, rate = 2), col = "red")
+legend(
+  "topleft", 
+  legend = c(expression(Y[1] == log(X[1])), expression(Y[2] == log(X[2]))), 
+  col = c("black", "red"), lty = 1
+)
+for (i in seq_along(p)) {
+  qy1 <- log(qgamma(p[i], shape = 5, rate = 3))
+  qy2 <- log(qgamma(p[i], shape = 5, rate = 2))
+  points(c(qy1, qy2), c(p[i], p[i]), pch = 19, col = pcols[i])
+  segments(qy1, p[i], qy2, p[i], lty = 2, col = pcols[i])
+  segments(qy1, 0, qy1, p[i], lty = 3, col = pcols[i])
+  segments(qy2, 0, qy2, p[i], lty = 3, col = pcols[i])
+}
+par(mfrow=c(1,1))
+```
+
+```{r}
+# Commutativity of transport maps
+# F_1^{-1} ∘ F_2 ∘ F_1^{-1} ∘ F_3 = F_1^{-1} ∘ F_3 ∘ F_1^{-1} ∘ F_2
+
+x <- seq(0, 8, 0.01)
+x0 <- 4  # starting x value
+
+# Distribution functions
+F1 <- function(x) pgamma(x, shape = 5, rate = 3)
+F2 <- function(x) pgamma(x, shape = 5, rate = 2)
+F3 <- function(x) pgamma(x, shape = 5, rate = 1.2)
+Q1 <- function(p) qgamma(p, shape = 5, rate = 3)
+
+cols <- c("black", "red", "blue")
+path_cols <- c("purple", "darkorange")
+
+par(mfrow = c(1, 2))
+
+# ---- Panel 1: Gamma CDFs ----
+plot(x, F1(x), type = "l", ylab = "Pr(X <= x)", main = "Gamma CDFs (fixed shape, varying rate)\n Shift-representable -> Commutativity of transport maps",
+     xlim = c(0, 8))
+lines(x, F2(x), col = cols[2])
+lines(x, F3(x), col = cols[3])
+legend("bottomright",
+  legend = c(expression(F[1]: X[1] %~% Gamma(5, 3)),
+             expression(F[2]: X[2] %~% Gamma(5, 2)),
+             expression(F[3]: X[3] %~% Gamma(5, 1.2))),
+  col = cols, lty = 1, cex = 0.8, y.intersp = 1.5
+)
+
+# Path 1 (LHS): F_1^{-1} ∘ F_2 ∘ F_1^{-1} ∘ F_3
+# Evaluation order: x0 -> F_3 -> Q1 -> F_2 -> Q1
+a1 <- F3(x0)     # probability on F3 curve at x0
+b1 <- Q1(a1)     # x-value on F1 curve at that probability
+c1 <- F2(b1)     # probability on F2 curve at b1
+d1 <- Q1(c1)     # x-value on F1 curve at that probability (final)
+
+# Segments: vertical to F3, horizontal to F1, vertical to F2, horizontal to F1
+segments(x0, 0, x0, a1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(x0, a1, b1, a1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(b1, a1, b1, c1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(b1, c1, d1, c1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(d1, c1, d1, 0, col = path_cols[1], lty = 3, lwd = 1)
+points(c(x0, b1, b1, d1), c(a1, a1, c1, c1), pch = 19, col = path_cols[1], cex = 1.2)
+text(x0, a1, "A", pos = 4, col = path_cols[1], cex = 0.8, font = 2)
+text(b1, a1, "B", pos = 2, col = path_cols[1], cex = 0.8, font = 2)
+text(b1, c1, "C", pos = 1, col = path_cols[1], cex = 0.8, font = 2)
+text(d1, c1, "D", pos = 3, col = path_cols[1], cex = 0.8, font = 2)
+
+# Path 2 (RHS): F_1^{-1} ∘ F_3 ∘ F_1^{-1} ∘ F_2
+# Evaluation order: x0 -> F_2 -> Q1 -> F_3 -> Q1
+a2 <- F2(x0)     # probability on F2 curve at x0
+b2 <- Q1(a2)     # x-value on F1 curve at that probability
+c2 <- F3(b2)     # probability on F3 curve at b2
+d2 <- Q1(c2)     # x-value on F1 curve at that probability (final)
+
+# Segments: vertical to F2, horizontal to F1, vertical to F3, horizontal to F1
+segments(x0, 0, x0, a2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(x0, a2, b2, a2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(b2, a2, b2, c2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(b2, c2, d2, c2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(d2, c2, d2, 0, col = path_cols[2], lty = 3, lwd = 1)
+points(c(x0, b2, b2, d2), c(a2, a2, c2, c2), pch = 19, col = path_cols[2], cex = 1.2)
+text(x0, a2, "A'", pos = 3, col = path_cols[2], cex = 0.8, font = 2)
+text(b2, a2, "B'", pos = 2, col = path_cols[2], cex = 0.8, font = 2)
+text(b2, c2, "C'", pos = 4, col = path_cols[2], cex = 0.8, font = 2)
+text(d2, c2, "D'", pos = 2, col = path_cols[2], cex = 0.8, font = 2)
+
+# Mark start and common endpoint on x-axis
+points(x0, 0, pch = 17, col = "black", cex = 1.5)
+text(x0, 0, expression(x[0]), pos = 1, cex = 0.8, font = 2)
+points(d1, 0, pch = 4, col = "black", cex = 2, lwd = 3)
+text(d1, 0, expression(x*"*"), pos = 1, cex = 0.8, font = 2)
+
+legend("right",
+  legend = c(expression(F[1]^{-1} %.% F[2] %.% F[1]^{-1} %.% F[3]),
+             expression(F[1]^{-1} %.% F[3] %.% F[1]^{-1} %.% F[2])),
+  col = path_cols, lty = 2, lwd = 1.5, cex = 0.8, y.intersp = 1.5, title = "Paths"
+)
+
+# ---- Panel 2: LogGamma CDFs ----
+x <- seq(-3, 6, 0.01)
+x0 <- 2  # starting x value
+
+# Distribution functions
+F1 <- function(x) pnorm(x, mean = 0, sd = 1)
+F2 <- function(x) pnorm(x, mean = 1, sd = 1.25)
+F3 <- function(x) pnorm(x, mean = 2, sd = 1.25)
+Q1 <- function(p) qnorm(p, mean = 0, sd = 1)
+
+cols <- c("black", "red", "blue")
+path_cols <- c("purple", "darkorange")
+
+# ---- Panel 1: Gamma CDFs ----
+plot(x, F1(x), type = "l", ylab = "Pr(X <= x)", main = "Normal CDFs, unequal variance\n Not shift-representable -> Transport maps NOT commutative",
+     xlim = c(-3, 6))
+lines(x, F2(x), col = cols[2])
+lines(x, F3(x), col = cols[3])
+legend("bottomright",
+  legend = c(expression(F[1]: X[1] %~% N(0, 1)),
+             expression(F[2]: X[2] %~% N(1, 1.25)),
+             expression(F[3]: X[3] %~% N(2, 1.25))),
+  col = cols, lty = 1, cex = 0.8, y.intersp = 1.5
+)
+
+# Path 1 (LHS): F_1^{-1} ∘ F_2 ∘ F_1^{-1} ∘ F_3
+# Evaluation order: x0 -> F_3 -> Q1 -> F_2 -> Q1
+a1 <- F3(x0)     # probability on F3 curve at x0
+b1 <- Q1(a1)     # x-value on F1 curve at that probability
+c1 <- F2(b1)     # probability on F2 curve at b1
+d1 <- Q1(c1)     # x-value on F1 curve at that probability (final)
+
+# Segments: vertical to F3, horizontal to F1, vertical to F2, horizontal to F1
+segments(x0, 0, x0, a1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(x0, a1, b1, a1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(b1, a1, b1, c1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(b1, c1, d1, c1, col = path_cols[1], lty = 2, lwd = 1.5)
+segments(d1, c1, d1, 0, col = path_cols[1], lty = 3, lwd = 1)
+points(c(x0, b1, b1, d1), c(a1, a1, c1, c1), pch = 19, col = path_cols[1], cex = 1.2)
+text(x0, a1, "A", pos = 4, col = path_cols[1], cex = 0.8, font = 2)
+text(b1, a1, "B", pos = 2, col = path_cols[1], cex = 0.8, font = 2)
+text(b1, c1, "C", pos = 1, col = path_cols[1], cex = 0.8, font = 2)
+text(d1, c1, "D", pos = 3, col = path_cols[1], cex = 0.8, font = 2)
+
+# Path 2 (RHS): F_1^{-1} ∘ F_3 ∘ F_1^{-1} ∘ F_2
+# Evaluation order: x0 -> F_2 -> Q1 -> F_3 -> Q1
+a2 <- F2(x0)     # probability on F2 curve at x0
+b2 <- Q1(a2)     # x-value on F1 curve at that probability
+c2 <- F3(b2)     # probability on F3 curve at b2
+d2 <- Q1(c2)     # x-value on F1 curve at that probability (final)
+
+# Segments: vertical to F2, horizontal to F1, vertical to F3, horizontal to F1
+segments(x0, 0, x0, a2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(x0, a2, b2, a2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(b2, a2, b2, c2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(b2, c2, d2, c2, col = path_cols[2], lty = 2, lwd = 1.5)
+segments(d2, c2, d2, 0, col = path_cols[2], lty = 3, lwd = 1)
+points(c(x0, b2, b2, d2), c(a2, a2, c2, c2), pch = 19, col = path_cols[2], cex = 1.2)
+text(x0, a2, "A'", pos = 3, col = path_cols[2], cex = 0.8, font = 2)
+text(b2, a2, "B'", pos = 2, col = path_cols[2], cex = 0.8, font = 2)
+text(b2, c2, "C'", pos = 4, col = path_cols[2], cex = 0.8, font = 2)
+text(d2, c2, "D'", pos = 2, col = path_cols[2], cex = 0.8, font = 2)
+
+# Mark start and common endpoint on x-axis
+points(x0, 0, pch = 17, col = "black", cex = 1.5)
+text(x0, 0, expression(x[0]), pos = 1, cex = 0.8, font = 2)
+points(d1, 0, pch = 4, col = "black", cex = 2, lwd = 3)
+text(d1, 0, expression(x*"*"), pos = 1, cex = 0.8, font = 2)
+
+legend("right",
+  legend = c(expression(F[1]^{-1} %.% F[2] %.% F[1]^{-1} %.% F[3]),
+             expression(F[1]^{-1} %.% F[3] %.% F[1]^{-1} %.% F[2])),
+  col = path_cols, lty = 2, lwd = 1.5, cex = 0.8, y.intersp = 1.5, title = "Paths"
+)
+par(mfrow = c(1,1))
+```
+
+```{r}
+mu1 <- 0
+mu2 <- 0.2
+sd1 <- 1
+sd2 <- 1.25
+
+x <- seq(-10, 4, 0.01)
+plot(x, pnorm(x, mu1, sd1), type = "l")
+lines(x, pnorm(x, mu2, sd2), col = "red")
+
+(mu1*sd2 - mu2*sd1)/(sd2-sd1)
+d = pnorm(x, mu1, sd1) - pnorm(x, mu2, sd2)
+min(d[d<0])
+```
+
+
+
+```{r}
+plot_transformed_uvsd_vector <- function(mu_s_vec = c(0.5, 1.0, 1.5), a = 0.25, b = 1, x_min = -3, x_max = 5, step = 0.01) {
+  # Calculate the universal concurrent crossing point
+  x_star <- -b / a
+  
+  # Sequences for untransformed (full range) and transformed (truncated)
+  x_untrans <- seq(x_min, x_max, step)
+  
+  x_start <- max(x_star + step, x_min)
+  x_trans <- seq(x_start, x_max, step)
+  y_trans <- log(x_trans - x_star)
+  
+  options(repr.plot.width = 12, repr.plot.height = 10)
+  par(mfrow = c(2, 2))
+  
+  line_colors <- rainbow(length(mu_s_vec))
+  
+  # --- TOP ROW: Untransformed ---
+  
+  # 1. Untransformed PDF
+  plot(x_untrans, dnorm(x_untrans), type = "l", 
+       main = "Untransformed PDF", ylab = "Density", xlab = "x", ylim = c(0, 0.5))
+  for (i in seq_along(mu_s_vec)) {
+    mu_s <- mu_s_vec[i]
+    sd_s <- a * mu_s + b
+    lines(x_untrans, dnorm(x_untrans, mean = mu_s, sd = sd_s), col = line_colors[i])
+  }
+  
+  # 2. Untransformed CDF
+  plot(x_untrans, pnorm(x_untrans), type = "l", 
+       main = "Untransformed CDF", ylab = "Cumulative Probability", xlab = "x")
+  for (i in seq_along(mu_s_vec)) {
+    mu_s <- mu_s_vec[i]
+    sd_s <- a * mu_s + b
+    lines(x_untrans, pnorm(x_untrans, mean = mu_s, sd = sd_s), col = line_colors[i])
+  }
+  
+  # --- BOTTOM ROW: Transformed ---
+  
+  # 3. Transformed PDF
+  plot(y_trans, exp(y_trans) * dnorm(x_trans), type = "l", 
+       main = "Transformed PDF", ylab = "Density", xlab = "y")
+  for (i in seq_along(mu_s_vec)) {
+    mu_s <- mu_s_vec[i]
+    sd_s <- a * mu_s + b
+    lines(y_trans, exp(y_trans) * dnorm(x_trans, mean = mu_s, sd = sd_s), col = line_colors[i])
+  }
+  
+  # 4. Transformed CDF
+  plot(y_trans, pnorm(x_trans), type = "l", 
+       main = "Transformed CDF", ylab = "Cumulative Probability", xlab = "y")
+  for (i in seq_along(mu_s_vec)) {
+    mu_s <- mu_s_vec[i]
+    sd_s <- a * mu_s + b
+    lines(y_trans, pnorm(x_trans, mean = mu_s, sd = sd_s), col = line_colors[i])
+  }
+}
+
+plot_transformed_uvsd_vector(a = 0.25)
+plot_transformed_uvsd_vector(a = 0.125, x_min = -4)
+```

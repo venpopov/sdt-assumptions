@@ -1,0 +1,57 @@
+---
+title: "When is a family of random variables shift-representable?"
+format: html
+---
+
+```{r}
+plgamma <- function(x, shape, rate) {
+  pgamma(exp(x), shape = shape, rate = rate)
+}
+```
+
+```{r}
+par(mfrow = c(1, 2))
+x <- seq(0, 5, 0.01)
+p <- c(0.3, 0.7)
+pcols <- c("blue", "darkgreen")
+
+# Panel 1: Gamma CDFs
+plot(x, pgamma(x, shape = 5, rate = 3), type = "l", ylab = "Pr(X <= x)", main = "Gamma CDFs")
+lines(x, pgamma(x, shape = 5, rate = 2), col = "red")
+legend(
+  "topleft", 
+  legend = c(expression(X[1] %~% Gamma(5, 3)), expression(X[2] %~% Gamma(5, 2))), 
+  col = c("black", "red"), lty = 1
+)
+for (i in seq_along(p)) {
+  qx1 <- qgamma(p[i], shape = 5, rate = 3)
+  qx2 <- qgamma(p[i], shape = 5, rate = 2)
+  points(c(qx1, qx2), c(p[i], p[i]), pch = 19, col = pcols[i])
+  segments(qx1, p[i], qx2, p[i], lty = 2, col = pcols[i])
+  segments(qx1, 0, qx1, p[i], lty = 3, col = pcols[i])
+  segments(qx2, 0, qx2, p[i], lty = 3, col = pcols[i])
+}
+
+
+# Panel 2: LogGamma CDFs
+y <- seq(-1, 2, 0.01)
+plot(
+  y, plgamma(y, shape = 5, rate = 3), type = "l", ylab = "Pr(Y <= y)", xlab = "y = log(x)", 
+  main = "LogGamma CDFs"
+)
+lines(y, plgamma(y, shape = 5, rate = 2), col = "red")
+legend(
+  "topleft", 
+  legend = c(expression(Y[1] == log(X[1]) %~% LogGamma), expression(Y[2] == log(X[2]) %~% LogGamma)), 
+  col = c("black", "red"), lty = 1
+)
+for (i in seq_along(p)) {
+  qy1 <- log(qgamma(p[i], shape = 5, rate = 3))
+  qy2 <- log(qgamma(p[i], shape = 5, rate = 2))
+  points(c(qy1, qy2), c(p[i], p[i]), pch = 19, col = pcols[i])
+  segments(qy1, p[i], qy2, p[i], lty = 2, col = pcols[i])
+  segments(qy1, 0, qy1, p[i], lty = 3, col = pcols[i])
+  segments(qy2, 0, qy2, p[i], lty = 3, col = pcols[i])
+}
+```
+
